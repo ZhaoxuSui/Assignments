@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Swipe between maps</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.css' rel='stylesheet' />
+       
+    <!-- JS and CSS for the swipe plugin -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.js'></script>
+    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.css' type='text/css' />
+    <style>
+        body { margin:0; padding:0;overflow: hidden; z-index:-1;}
+        body * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            z-index:-1;
+        }
+        .map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            z-index:-1;
+        }
+        #Left { z-index: 9999; 
+            color: rgb(0, 235, 215);
+            background-color:rgba(255, 255, 255, 0); 
+            opacity: 80%; 
+            z-index:99;
+            float: left;
+        }
+        #Right { z-index: 9999; 
+            color: rgb(0, 224, 67);
+            background-color:rgba(255, 255, 255, 0); 
+            opacity: 80%; 
+            z-index:99;
+            float: right;
+        }
+        #Bottom { z-index: 9999; 
+            color: rgb(0, 0, 0);
+            background-color:rgb(255, 255, 255); 
+            font-size: 7px;
+            font-family: 'Segoe UI';
+            z-index:99;
+            text-align: center;
+        }
+        .owners {
+            z-index: 1;
+        }
+        .renters {
+            z-index: 1;
+        }
+     </style>
+</head>
+<body>
+    <div id="comparison-container">
+        <div id='owners' class='map'></div>  <!-- div for owners map div -->
+        <div id='renters' class='map'></div> <!--  div for renters map div -->
+    </div>
+    <div id='Left'>
+        <h1>Owners in Portland.</h1>
+    </div>
+    <div id='Right'>
+        <h1>Renters in Portland.</h1>
+    </div>
+    <div id='Bottom'>
+        <h1>Made by Zhaou Sui</h1>
+    </div>
+    <script>
+        // Access Token
+        mapboxgl.accessToken = 'pk.eyJ1Ijoiemhhb3h1c3VpIiwiYSI6ImNsOTRwZ2R4bDI1cGszbnBjbzFlaG40NTAifQ.2K_zqPRquP6HGruoSSUwxw';
+
+        // Popup variable declaration
+        var popup = new mapboxgl.Popup({
+            closeButton: false,
+            closeOnClick: false
+        });
+
+        // Map Frames Declaration
+        var ownerMap = new mapboxgl.Map({
+            container: 'owners', // owners map div 
+            style: 'mapbox://styles/mapbox/dark-v10', // Mapbox dark style 
+            center: [-122.6, 45.5], 
+            zoom: 10 
+        });
+        var renterMap = new mapboxgl.Map({
+            container: 'renters', // renters map div 
+            style: 'mapbox://styles/mapbox/dark-v10', // Mapbox dark style 
+            center: [-122.6, 45.5], 
+            zoom: 10 
+        });
+
+        // Owner Map Data Load
+        ownerMap.on('load', function() {
+            // Add Data Layer
+            ownerMap.addLayer({
+  	            id: 'Owner Data',
+  	            type: "fill",
+                source: {
+                    type: 'vector',
+                    url: 'mapbox://zhaoxusui.alook4v7'  //input your tileset ID url e.g. 'mapbox://jomerson.6ykhlovc' 
+                    },
+                    'source-layer': 'Owner-Renter-Pop-azfw30', //input your source layer name e.g. 'Owner-Renter-Pop-ca08iw'
+                paint: {
+                    'fill-color':
+                    ["step",
+                        ["get", "Own"],
+                        "hsl(180, 100%, 100%)",
+                        15.0,
+                        "hsl(180, 100%, 85%)",
+                        20.0,
+                        "hsl(180, 100%, 70%)",
+                        25.0,
+                        "hsl(180, 100%, 55%)",
+                        30.0,
+                        "hsl(180, 100%, 40%)",
+                        35.0,
+                        "hsl(180, 100%, 25%)"
+                    ],
+                    "fill-opacity": 0.7 
+                }       
+            });
+
+            // Add the current location of popup according to the cursor location
+            ownerMap.on('mousemove', 'Owner Data', function (e) {
+                // Change the cursor style as a UI indicator.
+                ownerMap.getCanvas().style.cursor = 'pointer';
+
+                var coordinates = e.lngLat;
+                var description = e.features[0].properties.Own;
+
+                // Populate the popup and set its coordinates
+                // based on the feature found.
+                popup.setLngLat(coordinates)
+                    .setHTML("Owners: " + description + "%")
+                    .addTo(ownerMap);
+            });
+
+            // Remove the current popup when the cursor leave this location, as it will enter the next location
+            ownerMap.on('mouseleave', 'Owner Data', function () {
+                ownerMap.getCanvas().style.cursor = '';
+                popup.remove();
+            });
+        });
+
+        // Renter Map Data Load
+        renterMap.on('load', function() {
+            // Add Data Layer
+            renterMap.addLayer({
+  	            id: 'Renter Data',
+  	            type: "fill",
+                source: {
+                    type: 'vector',
+                    url: 'mapbox://zhaoxusui.alook4v7'  //input your tileset ID url e.g. 'mapbox://jomerson.6ykhlovc' 
+                    },
+                    'source-layer': 'Owner-Renter-Pop-azfw30', //input your source layer name e.g. 'Owner-Renter-Pop-ca08iw'
+                paint: {
+                    'fill-color':
+                    ["step",
+                        ["get", "Rent"],
+                        "hsl(120, 100%, 100%)",
+                        15.0,
+                        "hsl(120, 100%, 85%)",
+                        20.0,
+                        "hsl(120, 100%, 70%)",
+                        25.0,
+                        "hsl(120, 100%, 55%)",
+                        30.0,
+                        "hsl(120, 100%, 40%)",
+                        35.0,
+                        "hsl(120, 100%, 25%)"
+                    ],
+                    "fill-opacity": 0.7 
+                }       
+            });
+
+            // Add the current location of popup according to the cursor location
+            renterMap.on('mousemove', 'Renter Data', function (e) {
+                // Change the cursor style as a UI indicator.
+                renterMap.getCanvas().style.cursor = 'pointer';
+   
+                var coordinates = e.lngLat;
+                var description = e.features[0].properties.Rent;
+   
+                // Populate the popup and set its coordinates
+                // based on the feature found.
+                popup.setLngLat(coordinates)
+                    .setHTML("Renters: " + description + "%")
+                    .addTo(renterMap);
+            });
+
+            // Remove the current popup when the cursor leave this location, as it will enter the next location
+            renterMap.on('mouseleave', 'Renter Data', function () {
+                renterMap.getCanvas().style.cursor = '';
+                popup.remove();
+            });
+        });
+
+         // A selector or reference to HTML element
+        var container = '#comparison-container';
+        var map = new mapboxgl.Compare(ownerMap, renterMap, container, {
+        })
+    </script>
+
+    </body>
+</html>
