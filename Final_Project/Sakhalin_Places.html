@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Place Names on Sakhalin</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
+    <script type="text/javascript" src="Base_Political_Layer_JSONs\Place_declared.geojson"></script>
+    <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+    <style>
+        body {
+        color: #404040;
+        font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', sans-serif;
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+        }
+         
+        * {
+        box-sizing: border-box;
+        }
+         
+        .sidebar {
+        position: absolute;
+        width: 25%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        overflow: hidden;
+        border-right: 1px solid rgba(0, 0, 0, 0.25);
+        }
+         
+        .map {
+        position: absolute;
+        left: 25%;
+        width: 75%;
+        top: 0;
+        bottom: 0;
+        }
+         
+        h1 {
+        font-size: 22px;
+        margin: 0;
+        font-weight: 400;
+        line-height: 20px;
+        padding: 20px 2px;
+        }
+         
+        a {
+        color: #404040;
+        text-decoration: none;
+        }
+         
+        a:hover {
+        color: #101010;
+        }
+         
+        .heading {
+        background: #fff;
+        border-bottom: 1px solid #eee;
+        min-height: 60px;
+        line-height: 60px;
+        padding: 0 10px;
+        background-color: #483C32;
+        color: #fff;
+        }
+         
+        .listings {
+        height: 100%;
+        overflow: auto;
+        padding-bottom: 60px;
+        }
+         
+        .listings .item {
+        display: block;
+        border-bottom: 1px solid #eee;
+        padding: 10px;
+        text-decoration: none;
+        }
+         
+        .listings .item:last-child {
+        border-bottom: none;
+        }
+        .listings .item .title {
+        display: block;
+        color: #483C32;
+        font-weight: 700;
+        }
+         
+        .listings .item .title small {
+        font-weight: 400;
+        }
+        .listings .item.active .title,
+        .listings .item .title:hover {
+        color: #E1C16E;
+        }
+        .listings .item.active {
+        background-color: #f8f8f8;
+        }
+        ::-webkit-scrollbar {
+        width: 3px;
+        height: 3px;
+        border-left: 0;
+        background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-track {
+        background: none;
+        }
+        ::-webkit-scrollbar-thumb {
+        background: #483C32;
+        border-radius: 0;
+        }
+         
+        .marker {
+        border: none;
+        cursor: pointer;
+        height: 56px;
+        width: 56px;
+        }
+         
+        /* Marker tweaks */
+        .mapboxgl-popup {
+        padding-bottom: 50px;
+        }
+        .mapboxgl-popup-close-button {
+        color: #fff;
+        }
+        .mapboxgl-popup-content {
+        font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', sans-serif;
+        padding: 0;
+        width: 360px;
+        }
+        .mapboxgl-popup-content h3 {
+        background: #483C32;
+        color: #fff;
+        margin: 0;
+        padding: 10px;
+        border-radius: 3px 3px 0 0;
+        font-weight: 700;
+        margin-top: -15px;
+        }
+         
+        .mapboxgl-popup-content h4 {
+        margin: 0;
+        padding: 10px;
+        font-weight: 400;
+        }
+         
+        .mapboxgl-popup-content div {
+        padding: 10px;
+        }
+         
+        .mapboxgl-popup-anchor-top > .mapboxgl-popup-content {
+        margin-top: 15px;
+        }
+         
+        .mapboxgl-popup-anchor-top > .mapboxgl-popup-tip {
+        border-bottom-color: #483C32;
+        }
+        .popupImage{
+            width:100%;
+            cursor: pointer;
+        }
+        .filter-group {
+        font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        font-weight: 600;
+        position: absolute;
+        top: 30px;
+        right: 0px;
+        z-index: 1;
+        border-radius: 5px;
+        width: 100px;
+        color: #fff;
+        }
+
+        .filter-group input[type='radio']:first-child + label {
+        border-radius: 3px 3px 0 0;
+        }
+
+        .filter-group label:last-child {
+        border-radius: 0 0 3px 3px;
+        border: none;
+        }
+
+        .filter-group input[type='radio'] {
+        display: none;
+        }
+
+        .filter-group input[type='radio'] + label {
+        background-color: #483C32;
+        display: block;
+        cursor: pointer;
+        padding: 10px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+        }
+
+        .filter-group input[type='radio'] + label {
+        background-color: #483C32;
+        text-transform: capitalize;
+        }
+
+        .filter-group input[type='radio'] + label:hover,
+        .filter-group input[type='radio']:active + label {
+        background-color: #483C32;
+        }
+
+        .filter-group input[type='radio']:active + label:before {
+        content: '✔';
+        margin-right: 5px;
+        }
+        .LegendContainer {
+             position: absolute;
+             top: 20px;
+             right: 20px;
+             z-index: 2;
+             width: 180px;
+             height: 24px;
+             background: #483C32;
+             transition: width 2s, height 2s; /* this is the time it takes for the container to transition */
+             border-radius: 5px;
+             
+        }
+        .descriptionPanel {
+             position: absolute;
+             bottom: 30px;
+             right: 20px;
+             z-index: 2;
+             width: 73%;
+             background: #483C32;
+             transition: width 2s, height 2s;
+             overflow: hidden;
+             border-radius: 7px;
+             color: white;
+         }
+         /* style for items with the class "chevron" */
+        .chevron {
+             position: relative;
+             margin-left: 45%;
+             font-size: x-large;
+             color: white;
+        }
+        #baselayermenu {
+            font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            color:#fff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Description Panel -->
+    <div class="descriptionPanel" id="descriptionPanel" style="height: 250px;">
+        <span onClick=panelSelect() id="glyph" class="chevron glyphicon glyphicon-chevron-down"></span>
+        <hr/>
+        <h4 style="color: white; clear: both; margin-left: 10px; text-align: left">Sakhalin / Сахали́н / 樺太<p style="color: white; float: right; clear: both; margin-right: 10px">GEOG490 Web Mapping Final Project --- Zhaoxu Sui</h4>
+        <p style="margin-left: 10px; margin-right: 10px;">
+            Sakhalin is an elongated island in Northeast Asia, located just 6.5 km (4.0 mi) off the southeastern coast of Russia's Khabarovsk Krai, and 40 km (25 mi) north of Japan's Hokkaido. Sakhalin was later claimed by both Russia and Japan over the course of the 19th and 20th centuries. These disputes sometimes involved military conflicts and divisions of the island between the two powers. In 1875, Japan ceded its claims to Russia in exchange for the northern Kuril Islands. In 1905, following the Russo-Japanese War, the island was divided, with Southern Sakhalin going to Japan. Russia has held all of the island since seizing the Japanese portion in the final days of World War II in 1945, as well as all of the Kurils. Japan no longer claims any of Sakhalin, although it does still claim the southern Kuril Islands.
+        </p>
+        <p style="margin-left: 10px; margin-right: 10px;">
+            Сахали́н — остров у восточного побережья Азии. Вместе с Курильскими островами целиком входит в состав Сахалинской области. Крупнейший остров России.
+            樺太（サハリン）は、ユーラシア東方、オホーツク海の南西部にある島。広義の日本列島。樺太は、北部と南部でそれぞれ異なる沿革を経たため、ここでは北緯50度線以以南を「南樺太」と表記する。
+        </p>
+    </div>
+    <!-- Side Bar -->
+    <div class="sidebar">
+        <div class="heading">
+            <h1>List of Places in South Sakhalin</h1>
+        </div>
+        <div id="listings" class="listings"></div>
+    </div>
+    <div id="map" class="map"></div>
+    <!-- Upper Right Panels -->
+    <div class="LegendContainer">
+        <nav id="filter-group" class="filter-group"></nav>
+        <div id="baselayermenu">
+            <input id="mapbox/satellite-v9" type="radio" name="rtoggle" value="satellite">
+            <label for="mapbox/satellite-v9">satellite</label>
+            <input id="zhaoxusui/cligq3kf8003l01q1fipt1803" type="radio" name="rtoggle" value="monochrome" checked="checked">
+            <label for="zhaoxusui/cligq3kf8003l01q1fipt1803">monochrome</label>
+        </div>
+    </div>
+<script>
+    
+    // Mapbox Access Token
+	mapboxgl.accessToken = 'pk.eyJ1Ijoiemhhb3h1c3VpIiwiYSI6ImNsOTRwZ2R4bDI1cGszbnBjbzFlaG40NTAifQ.2K_zqPRquP6HGruoSSUwxw';
+
+    // Retreiving List for the Radio Buttons for Political Layers
+    var eras =    {
+     "type": "FeatureCollection",
+     "features": [
+        {
+     	"type": "Feature",
+     	"properties": {
+     	    "icon": "1900"
+     	},
+        },
+        {
+     	"type": "Feature",
+     	"properties": {
+     	    "icon": "1910"
+     	},
+        },
+        {
+     	"type": "Feature",
+     	"properties": {
+     	    "icon": "1920"
+     	},
+        },
+        {
+     	"type": "Feature",
+     	"properties": {
+     	    "icon": "1930"
+     	},
+        },
+        {
+     	"type": "Feature",
+     	"properties": {
+     	    "icon": "1940"
+     	},
+        },
+        {
+     	"type": "Feature",
+     	"properties": {
+     	    "icon": "1950"
+     	},
+        },
+        {
+     	"type": "Feature",
+     	"properties": {
+     	    "icon": "2023"
+     	},
+        },
+        {
+     	"type": "Feature",
+     	"properties": {
+     	    "icon": "Clear"
+     	},
+        },
+     ]
+    };
+
+    var filterGroup = document.getElementById('filter-group');
+
+	// Map Initialization
+	var map = new mapboxgl.Map({
+		container: 'map',
+        projection: 'globe',
+		style: 'mapbox://styles/zhaoxusui/cligq3kf8003l01q1fipt1803',
+		center: [142.86, 48.21],
+		zoom: 6,
+	});
+
+	// Function to change the labels of settlements depending on the years of Political map layers selected
+    function change_label(year){
+        if(year == 1900 || year == 1950 || year == 2023){
+            map.setLayoutProperty('English-labels', 'visibility', 'none');
+            map.setLayoutProperty('Russian-labels', 'visibility', 'visible');
+            map.setLayoutProperty('Japanese-labels', 'visibility', 'none');
+        }
+        if(year == 1910 || year == 1920 || year == 1930 || year == 1940){
+            map.setLayoutProperty('English-labels', 'visibility', 'none');
+            map.setLayoutProperty('Russian-labels', 'visibility', 'none');
+            map.setLayoutProperty('Japanese-labels', 'visibility', 'visible');
+        }
+    }
+
+	// Function to hide all the political map layers
+    function reset_layer(){
+        map.setLayoutProperty('1900', 'visibility', 'none');
+        map.setLayoutProperty('1910', 'visibility', 'none');
+        map.setLayoutProperty('1920', 'visibility', 'none');
+        map.setLayoutProperty('1930', 'visibility', 'none');
+        map.setLayoutProperty('1940', 'visibility', 'none');
+        map.setLayoutProperty('1950', 'visibility', 'none');
+        map.setLayoutProperty('2023', 'visibility', 'none');
+        map.setLayoutProperty('1900-labels', 'visibility', 'none');
+        map.setLayoutProperty('1910-labels', 'visibility', 'none');
+        map.setLayoutProperty('1920-labels', 'visibility', 'none');
+        map.setLayoutProperty('1930-labels', 'visibility', 'none');
+        map.setLayoutProperty('1940-labels', 'visibility', 'none');
+        map.setLayoutProperty('1950-labels', 'visibility', 'none');
+        map.setLayoutProperty('2023-labels', 'visibility', 'none');
+    }
+
+	// Main GeoJSON file used
+    places = Sakhalin_places;
+    places.features.forEach((places, i) => {
+        delete places['id'];
+        places.properties.id = i;
+    });
+
+    // Switch Base Map
+    const layerList = document.getElementById('baselayermenu');
+    const baselayerinputs = layerList.getElementsByTagName('input');
+    
+    // Depending on the base map, adjust the appearance of text layers
+    for (const baselayerinput of baselayerinputs) {
+        console.log(baselayerinput);
+        baselayerinput.onclick = (baselayer) => {
+            const baselayerId = baselayer.target.id;
+            if(baselayerId == "mapbox/satellite-v9"){
+                map.addLayer({
+                    id: 'satellite',
+                    source: 'sate',
+                    type: "raster"
+                });
+                map.moveLayer('satellite','English-labels','Japanese-labels','Russian-labels');
+                map.setPaintProperty('English-labels','text-color','#FFFFFF');
+                map.setPaintProperty('Russian-labels','text-color','#FFFFFF');
+                map.setPaintProperty('Japanese-labels','text-color','#FFFFFF');
+                map.setPaintProperty('1900-labels','text-color','#FFFFFF');
+                map.setPaintProperty('1910-labels','text-color','#FFFFFF');
+                map.setPaintProperty('1920-labels','text-color','#FFFFFF');
+                map.setPaintProperty('1930-labels','text-color','#FFFFFF');
+                map.setPaintProperty('1940-labels','text-color','#FFFFFF');
+                map.setPaintProperty('1950-labels','text-color','#FFFFFF');
+                map.setPaintProperty('2023-labels','text-color','#FFFFFF');
+            }
+            else{
+                map.removeLayer('satellite');
+                map.setPaintProperty('English-labels','text-color','black');
+                map.setPaintProperty('Russian-labels','text-color','black');
+                map.setPaintProperty('Japanese-labels','text-color','black');
+                map.setPaintProperty('1900-labels','text-color','black');
+                map.setPaintProperty('1910-labels','text-color','black');
+                map.setPaintProperty('1920-labels','text-color','black');
+                map.setPaintProperty('1930-labels','text-color','black');
+                map.setPaintProperty('1940-labels','text-color','black');
+                map.setPaintProperty('1950-labels','text-color','black');
+                map.setPaintProperty('2023-labels','text-color','black');
+            }
+        };
+    }
+
+    // Function to add settlement layers and the sources for poltical base map layers
+    function setlayers(){
+        map.addLayer({
+            'id': 'English-labels',
+            'type': 'symbol',
+            'source': 'point',
+                'layout': {
+                    'text-field': ['get','name_en'],
+                    'text-variable-anchor': ['left','right','top','bottom'],
+                    'text-radial-offset': 0.5,
+                    'text-justify': 'auto',
+                    'icon-image': 'dot-9',
+                    'text-size': 12,
+                    'text-font': ['DIN Pro Bold']
+            },
+                    'paint': {
+                    'text-halo-blur': 20,
+                    'text-halo-width': 20,
+                }
+            });
+        map.addLayer({
+            'id': 'Russian-labels',
+            'type': 'symbol',
+            'source': 'point',
+            'layout': {
+                'text-field': ['get','name'],
+                'text-variable-anchor': ['left','right','top','bottom'],
+                'text-radial-offset': 0.5,
+                'text-justify': 'auto',
+                'icon-image': 'dot-9',
+                'text-size': 12,
+                'text-font': ['DIN Pro Bold']
+            },
+            'paint': {
+                'text-halo-blur': 20,
+                'text-halo-width': 20,
+            }
+        });
+        map.addLayer({
+            'id': 'Japanese-labels',
+            'type': 'symbol',
+            'source': 'point',
+            'layout': {
+                'text-field': ['get', 'name_jp'],
+                'text-variable-anchor': ['left','right','top','bottom'],
+                'text-radial-offset': 0.5,
+                'text-justify': 'auto',
+                'icon-image': 'dot-9',
+                'text-size': 12,
+                'text-font': ['DIN Pro Bold']
+            },
+            'paint': {
+                'text-halo-blur': 20,
+                'text-halo-width': 20,
+            }
+        });
+        map.setLayoutProperty('Russian-labels', 'visibility', 'none');
+        map.setLayoutProperty('Japanese-labels', 'visibility', 'none');
+ 
+        //World Political GeoJSON at 1900, before Russio-Japanese War
+        map.addSource ('World_1900',{
+            type: 'geojson',
+            data: 'https://zhaoxusui.github.io/Assignments/Final_Project/Base_Political_Layer_JSONs/World_1900.geojson'
+        })
+        //World Political GeoJSON at 1910, after Russio-Japanese War, South Sakhalin to Japan
+        map.addSource ('World_1910',{
+            type: 'geojson',
+            data: 'https://zhaoxusui.github.io/Assignments/Final_Project/Base_Political_Layer_JSONs/World_1910.geojson'
+        })
+        //World Political GeoJSON at 1920
+        map.addSource ('World_1920',{
+            type: 'geojson',
+            data: 'https://zhaoxusui.github.io/Assignments/Final_Project/Base_Political_Layer_JSONs/World_1920.geojson'
+        })
+        //World Political GeoJSON at 1930
+        map.addSource ('World_1930',{
+            type: 'geojson',
+            data: 'https://zhaoxusui.github.io/Assignments/Final_Project/Base_Political_Layer_JSONs/World_1930.geojson'
+        })
+        //World Political GeoJSON at 1940, before WW2 Pacific Theater started
+        map.addSource ('World_1940',{
+            type: 'geojson',
+            data: 'https://zhaoxusui.github.io/Assignments/Final_Project/Base_Political_Layer_JSONs/World_1940.geojson'
+        })
+        //World Political GeoJSON at 1950, after WW2 ended, South Sakhalin to Soviets
+        map.addSource ('World_1950',{
+            type: 'geojson',
+            data: 'https://zhaoxusui.github.io/Assignments/Final_Project/Base_Political_Layer_JSONs/World_1950.geojson'
+        })
+        //World Political GeoJSON at 2023
+        map.addSource ('World_2023',{
+            type: 'geojson',
+            data: 'https://zhaoxusui.github.io/Assignments/Final_Project/Base_Political_Layer_JSONs/World_2023.geojson'
+        })
+    }
+
+    // Map's On 'load' function.
+    map.on('load', function () {
+        // Satellite base layer Source
+        map.addSource('sate', {
+            'type': 'raster',
+            'url': 'mapbox://mapbox.satellite',
+            'tileSize': 128
+        });
+        // DEM Source
+        map.addSource('dem', {
+            'type': 'raster-dem',
+            'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+            'tileSize': 128,
+            'maxzoom': 14
+        });
+        // Hillshade Layer
+        map.addLayer(
+        {
+            'id': 'hillshading',
+            'source': 'dem',
+            'type': 'hillshade'
+        },
+            'land-structure-polygon'
+        );
+        // 3D Terrain Layer
+        map.setTerrain({ 'source': 'dem', 'exaggeration': 1.5 });
+        map.addSource('point', {
+            type: 'geojson',
+            data: places
+        });
+        // Set-up all other layers
+        setlayers();
+
+        
+        // Political Base Map Selector starts here
+        eras.features.forEach(function (feature) {
+            var layerID = feature.properties['icon']; // get the value from the 'icon' field in the data, but icon doesn't mean icon because it's not Assignment 5
+            var sourceID = 'World_' + layerID;
+            // For Political Base Map Layers between 1900 to 2023
+            if (!map.getLayer(layerID) && layerID != "Clear") {
+                // Add polygons
+                map.addLayer({
+                    'id': layerID,
+                    'type': 'fill',
+                    'source': sourceID,
+                    'paint':{
+                        'fill-color': '#C19A6B',
+                        'fill-outline-color': '#483C32'
+                    }
+                });
+                // Adjust arrangement of layers
+                map.moveLayer(layerID, 'hillshading');
+                // Add labels
+                map.addLayer({
+                    'id': layerID + '-labels',
+                    'type': 'symbol',
+                    'source': sourceID,
+                    'layout': {
+                        'text-anchor': 'center',
+                        'text-field': ['get','Entity'],
+                        'text-variable-anchor': ['center'],
+                        'text-radial-offset': 0,
+                        'text-justify': 'center',
+                        'icon-image': ['get', 'icon'],
+                        'text-padding': 40,
+                        'text-font': ['DIN Pro Bold']
+                    },
+                });
+                // Hide all initialized layers
+                map.setLayoutProperty(layerID, 'visibility', 'none');
+                map.setLayoutProperty(layerID + '-labels', 'visibility', 'none');
+                // Add checkbox and label elements for the layer.
+                var input = document.createElement('input');
+                input.type = 'radio';
+                input.id = layerID;
+                input.checked = false;
+                filterGroup.appendChild(input);
+
+                var label = document.createElement('label');
+                label.setAttribute('for', layerID);
+                label.textContent = "Year " + layerID;
+                filterGroup.appendChild(label);
+
+                // When the checkbox changes, update the visibility of the layer.
+                input.addEventListener('click', function (e) {
+                    reset_layer();
+                    map.setLayoutProperty(
+                        layerID,
+                        'visibility',
+                        'visible'
+                    );
+                    change_label(layerID)            
+                    map.setLayoutProperty(
+                        layerID + '-labels',
+                        'visibility',
+                        'visible'
+                    );
+                });
+            }
+            //For "Clear"
+            else{
+                var input = document.createElement('input');
+                input.type = 'radio';
+                input.id = layerID;
+                input.checked = false;
+                filterGroup.appendChild(input);
+                reset_layer();
+                var label = document.createElement('label');
+                label.setAttribute('for', layerID);
+                label.textContent = "Clear";
+                filterGroup.appendChild(label)
+                // When the checkbox changes
+                input.addEventListener('click', function (e) {
+                    // Hide All Layers
+                    reset_layer();
+                    // Make only English Settlements labels visible
+                    map.setLayoutProperty('English-labels', 'visibility', 'visible');
+                    map.setLayoutProperty('Russian-labels', 'visibility', 'none');
+                    map.setLayoutProperty('Japanese-labels', 'visibility', 'none');
+                    // Go back to the bounds
+                    map.fitBounds([
+                        [137, 50], // southwestern corner of the bounds
+                        [150, 45] // northeastern corner of the bounds
+                    ]);
+                });
+            }
+        });
+
+        //The Locator Functions get called here
+        buildLocationList(places);
+        addMarkers();
+    });
+ 
+    //add the navigation control on the top-left
+    const nav = new mapboxgl.NavigationControl();
+    map.addControl(nav, 'top-left');
+
+    function addMarkers() {
+        /* For each feature in the GeoJSON object above: */
+        for (const marker of places.features) {
+            /* Create a div element for the marker. */
+            const el = document.createElement('div');
+            /* Assign a unique `id` to the marker. */
+            el.id = `marker-${marker.properties.id}`;
+            /* Assign the `marker` class to each marker for styling. */
+            el.className = 'marker';
+            /**
+            * Create a marker using the div element
+            * defined above and add it to the map.
+            **/
+            new mapboxgl.Marker(el, { offset: [0, -23] })
+                .setLngLat(marker.geometry.coordinates)
+                .addTo(map);
+ 
+            /**
+            * Listen to the element and when it is clicked, do three things:
+            * 1. Fly to the point
+            * 2. Close all other popups and display popup for clicked places
+            * 3. Highlight listing in sidebar (and remove highlight for all other listings)
+            **/
+            el.addEventListener('click', (e) => {
+                /* Fly to the point */
+                flyToplaces(marker);
+                /* Close all other popups and display popup for clicked places */
+                createPopUp(marker);
+                /* Highlight listing in sidebar */
+                const activeItem = document.getElementsByClassName('active');
+                e.stopPropagation();
+                if (activeItem[0]) {
+                    activeItem[0].classList.remove('active');
+                }
+                const listing = document.getElementById(
+                    `listing-${marker.properties.id}`
+                );
+                listing.classList.add('active');
+            });
+
+        }
+    }
+
+    /**
+    * Add a listing for each places to the sidebar.
+    **/
+    function buildLocationList(places) {
+        for (place of places.features) {
+            /* Add a new listing section to the sidebar. */
+            const listings = document.getElementById('listings');
+            const listing = listings.appendChild(document.createElement('div'));
+            /* Assign a unique `id` to the listing. */
+            listing.id = `listing-${place.properties.id}`;
+            /* Assign the `item` class to each listing for styling. */
+            listing.className = 'item';
+ 
+            /* Add the link to the individual listing created above. */
+            const link = listing.appendChild(document.createElement('a'));
+            link.href = '#';
+            link.className = 'title';
+            link.id = `link-${place.properties.id}`;
+            link.innerHTML = `${place.properties.name_en}`;
+ 
+            /* Add details to the individual listing. */
+            const details = listing.appendChild(document.createElement('div'));
+            details.innerHTML = `${place.properties.name} / ${place.properties.name_jp}`;
+            /**
+            * Listen to the element and when it is clicked, do four things:
+            * 1. Update the `currentFeature` to the places associated with the clicked link
+            * 2. Fly to the point
+            * 3. Close all other popups and display popup for clicked places
+            * 4. Highlight listing in sidebar (and remove highlight for all other listings)
+            **/
+            link.addEventListener('click', function () {
+                for (const feature of places.features) {
+                    if (this.id === `link-${feature.properties.id}`) {
+                        flyToplaces(feature);
+                        createPopUp(feature);
+                    }
+                }
+                const activeItem = document.getElementsByClassName('active');
+                if (activeItem[0]) {
+                    activeItem[0].classList.remove('active');
+                }
+                this.parentNode.classList.add('active');
+            });
+        }
+    }
+ 
+    // Fly to Function
+    function flyToplaces(currentFeature) {
+        map.flyTo({
+            center: [currentFeature.geometry.coordinates[0],currentFeature.geometry.coordinates[1]-0.02],
+            zoom: 12
+        });
+    }
+
+    //Pop up function
+    function createPopUp(currentFeature) {
+        const popUps = document.getElementsByClassName('mapboxgl-popup');
+        if (popUps[0]) popUps[0].remove();
+        const popup = new mapboxgl.Popup({ closeOnClick: true, closeButton: true})
+        popup.setLngLat(currentFeature.geometry.coordinates)
+        // For cities which img, wiki, and description available
+        if (currentFeature.properties.image_url) {
+            popup.setHTML(
+                `<h3>${currentFeature.properties.name_en}</h3>
+                <h4>This Place is currently regarded as <a href="${currentFeature.properties.wiki_link}" target="_blank">${currentFeature.properties.name_en}</a> . Its Russian name is ${currentFeature.properties.name}, and the former Japanese name that being used between 1905 to 1945 is ${currentFeature.properties.name_jp}, (${currentFeature.properties.name_ka})${currentFeature.properties.description}.
+                <img class="popupImage" src=${currentFeature.properties.image_url} alt="Image of the City">
+                </h4>`
+            )
+            popup.addTo(map);
+            }
+        // For cities which those are not available
+        else{
+            popup.setHTML(
+                `<h3>${currentFeature.properties.name_en}</h3>
+                <h4>This Place is currently regarded as ${currentFeature.properties.name_en}. Its Russian name is ${currentFeature.properties.name}, and the former Japanese name that being used between 1905 to 1945 is ${currentFeature.properties.name_jp}, (${currentFeature.properties.name_ka}).
+                </h4>`
+            )
+            popup.addTo(map);
+        }
+
+    }
+
+    //Expand and Hide Lower Panel
+    var state = { panelOpen: true };
+    function panelSelect(e){
+        if(state.panelOpen){
+          document.getElementById('descriptionPanel').style.height = '26px';
+          document.getElementById('glyph').className = "chevron glyphicon glyphicon-chevron-up";
+          state.panelOpen = false;
+        } else {
+          document.getElementById('descriptionPanel').style.height = '250px';
+          document.getElementById('glyph').className = "chevron glyphicon glyphicon-chevron-down";
+          state.panelOpen = true;
+        }
+     }
+</script>
+
+</body>
+</html>
