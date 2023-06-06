@@ -776,6 +776,7 @@
                 `<h3>${currentFeature.properties.name_en}</h3>
                 <h4>This Place is currently regarded as <a href="${currentFeature.properties.wiki_link}" target="_blank">${currentFeature.properties.name_en}</a>. Its Russian name is ${currentFeature.properties.name}, and the former Japanese name that being used between 1905 to 1945 is ${currentFeature.properties.name_jp} (${currentFeature.properties.name_ka}). ${currentFeature.properties.description}.
                 <img class="popupImage" src=${currentFeature.properties.image_url} alt="Image of the City">
+		Source: ${currentFeature.properties.image_url}
                 </h4>`
             )
             popup.addTo(map);
