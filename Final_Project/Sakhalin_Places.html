@@ -13,7 +13,7 @@
     <style>
         body {
         color: #404040;
-        font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', sans-serif;
+        font: 400 14px/20px 'Source Sans Pro', 'Helvetica Neue', sans-serif;
         margin: 0;
         padding: 0;
         -webkit-font-smoothing: antialiased;
@@ -42,7 +42,7 @@
         }
          
         h1 {
-        font-size: 22px;
+        font-size: 16px;
         margin: 0;
         font-weight: 400;
         line-height: 20px;
@@ -61,8 +61,8 @@
         .heading {
         background: #fff;
         border-bottom: 1px solid #eee;
-        min-height: 60px;
-        line-height: 60px;
+        min-height: 40px;
+        line-height: 40px;
         padding: 0 10px;
         background-color: #483C32;
         color: #fff;
@@ -178,11 +178,11 @@
         }
 
         .filter-group input[type='radio']:first-child + label {
-        border-radius: 3px 3px 0 0;
+        border-radius: 2px 2px 0 0;
         }
 
         .filter-group label:last-child {
-        border-radius: 0 0 3px 3px;
+        border-radius: 0 0 2px 2px;
         border: none;
         }
 
@@ -229,7 +229,7 @@
              bottom: 30px;
              right: 20px;
              z-index: 2;
-             width: 25%;
+             width: 70%;
              background: #483C32;
              transition: width 2s, height 2s;
              overflow: hidden;
@@ -252,7 +252,7 @@
 </head>
 <body>
     <!-- Description Panel -->
-    <div class="descriptionPanel" id="descriptionPanel" style="height: 250px;">
+    <div class="descriptionPanel" id="descriptionPanel" style="height: 200px;">
         <span onClick=panelSelect() id="glyph" class="chevron glyphicon glyphicon-chevron-down"></span>
         <hr/>
         <h4 style="color: white; clear: both; margin-left: 10px; text-align: left">Sakhalin / Сахали́н / 樺太<p style="color: white; float: right; clear: both; margin-right: 10px">GEOG490 Web Mapping Final Project --- Zhaoxu Sui</h4>
@@ -809,7 +809,7 @@
           document.getElementById('glyph').className = "chevron glyphicon glyphicon-chevron-up";
           state.panelOpen = false;
         } else {
-          document.getElementById('descriptionPanel').style.height = '250px';
+          document.getElementById('descriptionPanel').style.height = '200px';
           document.getElementById('glyph').className = "chevron glyphicon glyphicon-chevron-down";
           state.panelOpen = true;
         }
